@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Hamser MongoDB</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <script src="telegram.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Function to extract URL parameters
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            var results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        window.onload = function() {
+            const tg = window.Telegram.WebApp;
+            
+            // Expand the Web App to full height
+            tg.expand();
+    
+            // Set the background color to black
+            tg.setBackgroundColor('#000000');
+    
+            // Set the header color (you might want to adjust this)
+            tg.setHeaderColor('#000000');
+    
+            // Fetch Telegram user data
+            const user = tg.initDataUnsafe.user;
+            const chat = tg.initDataUnsafe.chat;
+            const reffid = getParameterByName('reffid');
+
+            // Prepare user data
+            const userData = {
+                id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name || '',
+                username: user.username || '',
+                photo_url: user.photo_url || '',
+                language_code: user.language_code || '',
+                chat_id: chat ? chat.id : '',
+                chat_type: chat ? chat.type : '',
+                chat_title: chat ? chat.title : '',
+                chat_username: chat ? chat.username : '',
+                chat_photo_url: chat ? chat.photo_url : '',
+                auth_date: tg.initDataUnsafe.auth_date,
+                hash: tg.initDataUnsafe.hash,
+                reffid: reffid || ''
+            };
+
+            // Send data to Unity using a custom URL scheme
+            window.location.href = `unity:${JSON.stringify(userData)}`;
+        };
+    </script> 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+
+    <script>
+      // Your web app's Firebase configuration
+      var firebaseConfig = {
+        // Your config object here
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+
+      // Add these functions for Unity to call
+      function CheckPlayerRegistrationWebGL(username, fullName, telegramId) {
+        firebase.database().ref('players/' + username).once('value').then((snapshot) => {
+          const exists = snapshot.exists();
+          const message = JSON.stringify({isRegistered: exists, username: username});
+          unityInstance.SendMessage('PlayerRegistration', 'OnPlayerRegistrationChecked', message);
+        }).catch((error) => {
+          console.error("Error checking registration: ", error);
+          unityInstance.SendMessage('PlayerRegistration', 'OnPlayerRegistrationChecked', JSON.stringify({isRegistered: false, username: username}));
+        });
+      }
+
+      function RegisterPlayerWebGL(username, fullName, telegramId) {
+        firebase.database().ref('players/' + username).set({
+          fullName: fullName,
+          telegramId: telegramId
+        }).then(() => {
+          unityInstance.SendMessage('PlayerRegistration', 'OnPlayerRegistered', JSON.stringify({success: true, username: username}));
+        }).catch((error) => {
+          console.error("Error registering player: ", error);
+          unityInstance.SendMessage('PlayerRegistration', 'OnPlayerRegistered', JSON.stringify({success: false, username: username}));
+        });
+      }
+    </script> 
+
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=720 height=1280 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Hamser MongoDB</div>
+      </div>
+    </div>
+    <script>
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Hamster MongoDB.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/Hamster MongoDB.data",
+        frameworkUrl: buildUrl + "/Hamster MongoDB.framework.js",
+        codeUrl: buildUrl + "/Hamster MongoDB.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Hamser MongoDB",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      // By default, Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        container.className = "unity-mobile";
+        canvas.className = "unity-mobile";
+
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // config.devicePixelRatio = 1;
+
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+        canvas.style.width = "720px";
+        canvas.style.height = "1280px";
+      }
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+          // Store unityInstance globally so our Firebase functions can access it
+          window.unityInstance = unityInstance;
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
