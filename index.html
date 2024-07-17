@@ -1,92 +1,85 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<head>
+  <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Hamser MongoDB | Telegram Mini App</title>
+    <title>Hamser MongoDB</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="TemplateData/style.css">
     <script>
         window.onload = function() {
             const tg = window.Telegram.WebApp;
-            
             // Expand the Web App to full height
             tg.expand();
-    
             // Set the background color to black
             tg.setBackgroundColor('#000000');
-    
             // Set the header color (you might want to adjust this)
             tg.setHeaderColor('#000000');
-    
             // Additional initialization code can go here
         };
     </script>
-</head>
-<body>
+    <style>
+      body { padding: 0; margin: 0; }
+      #unity-container { width: 100%; height: 100%; }
+      #unity-canvas { width: 100%; height: 100%; }
+      #unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: none; }
+      #unity-logo { width: 154px; height: 130px; background: url('unity-logo-dark.png') no-repeat center; }
+      #unity-progress-bar-empty { width: 141px; height: 18px; margin-top: 10px; margin-left: 6.5px; background: url('progress-bar-empty-dark.png') no-repeat center; }
+      #unity-progress-bar-full { width: 0%; height: 18px; margin-top: 10px; background: url('progress-bar-full-dark.png') no-repeat center; }
+      #unity-footer { display: none; }
+    </style>
+  </head>
+  <body>
     <div id="unity-container" class="unity-desktop">
-        <canvas id="unity-canvas"></canvas>
-        <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-                <div id="unity-progress-bar-full"></div>
-            </div>
+      <canvas id="unity-canvas"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
         </div>
-        <div id="unity-warning"></div>
-        <div id="unity-footer">
-            <div id="unity-webgl-logo"></div>
-            <div id="unity-fullscreen-button"></div>
-            <div id="unity-build-title">Hamser MongoDB</div>
-        </div>
+      </div>
+      <div id="unity-warning"> </div>
     </div>
     <script>
-        var buildUrl = "Build";
-        var loaderUrl = buildUrl + "/Hamster MongoDB.loader.js";
-        var config = {
-            dataUrl: buildUrl + "/Hamster MongoDB.data",
-            frameworkUrl: buildUrl + "/Hamster MongoDB.framework.js",
-            codeUrl: buildUrl + "/Hamster MongoDB.wasm",
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "DefaultCompany",
-            productName: "Hamser MongoDB",
-            productVersion: "1.0",
-        };
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Hamster MongoDB.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/Hamster MongoDB.data",
+        frameworkUrl: buildUrl + "/Hamster MongoDB.framework.js",
+        codeUrl: buildUrl + "/Hamster MongoDB.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Hamser MongoDB",
+        productVersion: "1.0",
+      };
 
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
-        var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-        var warningBanner = document.querySelector("#unity-warning");
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
 
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            container.className = "unity-mobile";
-            config.devicePixelRatio = 1;
-        } else {
-            canvas.style.width = "720px";
-            canvas.style.height = "1280px";
-        }
-        loadingBar.style.display = "block";
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        // Implementation omitted for brevity
+      }
 
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-                progressBarFull.style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                    unityInstance.SetFullscreen(1);
-                };
-                if (window.Telegram && window.Telegram.WebApp) {
-                    var telegramWebAppData = JSON.stringify(window.Telegram.WebApp.initData);
-                    unityInstance.SendMessage('PlayerRegistration', 'ReceiveTelegramData', telegramWebAppData);
-                }
-            }).catch((message) => {
-                alert(message);
-            });
-        };
-        document.body.appendChild(script);
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
     </script>
-</body>
+  </body>
 </html>
