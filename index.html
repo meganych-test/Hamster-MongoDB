@@ -6,8 +6,21 @@
     <title>Unity Web Player | 2023 Hamster MongoDB</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
+    </script>
+        <script>
+          window.onload = function() {
+              const tg = window.Telegram.WebApp;
+              // Expand the Web App to full height
+              tg.expand();
+              // Set the background color to black
+              tg.setBackgroundColor('#000000');
+              // Set the header color (you might want to adjust this)
+              tg.setHeaderColor('#000000');
+          };
+      </script>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=600 height=800 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
