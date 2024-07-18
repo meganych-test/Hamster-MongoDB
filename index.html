@@ -1,44 +1,74 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Telegram Mini App</title>
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <script src="TemplateData/UnityProgress.js"></script>
-    <script src="Build/UnityLoader.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script>
-      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/your_build.json", {onProgress: UnityProgress});
-      
-      // Initialize Firebase
-      var firebaseConfig = {
-        // Your Firebase configuration here
-      };
-      firebase.initializeApp(firebaseConfig);
-      firebase.analytics();
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity WebGL Player</title>
+    <!-- Include Unity WebGL build -->
+    <script src="Build/your_unity_build.loader.js"></script>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js';
+        import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/9.5.0/firebase-database.js';
 
-      // Telegram WebApp initialization
-      var tg = window.Telegram.WebApp;
-      tg.expand();
+        // Firebase Configuration
+        const firebaseConfig = {
+            // Your Firebase configuration object here
+        };
 
-      // Function to send data from Unity to Telegram
-      function sendDataToTelegram(data) {
-        tg.sendData(data);
-      }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-      // Function to send data from Unity to Firebase
-      function sendDataToFirebase(collection, document, data) {
-        firebase.firestore().collection(collection).doc(document).set(data)
-          .then(() => console.log("Document successfully written!"))
-          .catch((error) => console.error("Error writing document: ", error));
-      }
+        window.registerPlayer = function(telegramId, username, fullName) {
+            const playersRef = ref(database, 'players/' + telegramId);
+            set(playersRef, {
+                username: username,
+                full_name: fullName
+            }).then(() => {
+                console.log("Player registered successfully");
+                window.unityInstance.SendMessage('FirebaseManager', 'RegistrationSuccess');
+            }).catch((error) => {
+                console.error("Error registering player:", error);
+                window.unityInstance.SendMessage('FirebaseManager', 'RegistrationFailure', error.message);
+            });
+        };
+
+        window.callRegisterPlayer = function(telegramId, username, fullName) {
+            window.registerPlayer(telegramId, username, fullName);
+        };
     </script>
-  </head>
-  <body>
-    <div id="unityContainer" style="width: 100%; height: 100%; margin: auto"></div>
-  </body>
+</head>
+<body>
+    <div id="unity-container" style="width: 100%; height: 100%;">
+        <canvas id="unity-canvas" style="width: 100%; height: 100%;"></canvas>
+    </div>
+    <script>
+        var buildUrl = "Build";
+        var loaderUrl = buildUrl + "/your_unity_build.loader.js";
+        var config = {
+            dataUrl: buildUrl + "/your_unity_build.data",
+            frameworkUrl: buildUrl + "/your_unity_build.framework.js",
+            codeUrl: buildUrl + "/your_unity_build.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "YourCompanyName",
+            productName: "YourProductName",
+            productVersion: "1.0",
+        };
+
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+            createUnityInstance(document.querySelector("#unity-canvas"), config)
+                .then((unityInstance) => {
+                    window.unityInstance = unityInstance;
+                    console.log("Unity WebGL player loaded");
+                })
+                .catch((message) => {
+                    alert(message);
+                });
+        };
+        document.body.appendChild(script);
+    </script>
+</body>
 </html>
